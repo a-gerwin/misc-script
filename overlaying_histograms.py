@@ -1,4 +1,4 @@
-from ROOT import TH1F, TFile, TEfficiency, TF1, std, TArrayD, TCanvas, gPad, kCircle, kRed, gStyle
+from ROOT import TH1F, TFile, TEfficiency, TF1, std, TArrayD, TCanvas, gPad, kCircle, kRed, gStyle, TPad
 import sys, array
 import numpy as np
 
@@ -15,6 +15,18 @@ file_mc = TFile.Open(file_mc, "READ")
 
 
 for hist in histograms:
+	#todo: set better dimension
+	canvashandler=TCanvas("canvas",'canvas',800, 1000)
+	canvashandler.cd()
+	# todo: set better ratio, we want around 800x600? maybe?
+	pad1 = TPad("pad1", "pad1", 0, 0.6, 1, 1)
+#	pad1.SetBottomMargin(0)
+
+	pad1.Draw()
+	pad1.cd()
+	if "_pt_" in hist:
+		gPad.SetLogy()
+
 	histo_data1 = file_data1.Get(f"/NOSYS/{hist}")
 	histo_data1.SetName("Data with insitu")
 	histo_data1.GetXaxis().SetTitle(hist)
@@ -27,24 +39,38 @@ for hist in histograms:
 	histo_mc.SetMarkerStyle(kCircle)
 	histo_mc.SetLineColor(kRed)
 
-	canvashandler=TCanvas("canvas")
-	canvashandler.cd()
-
-
-
 	histo_data1.Draw("PLC PMC")
 	histo_data2.Draw("SAME PLC PMC")
 	histo_mc.Draw("SAME")
 
 	gPad.BuildLegend()
-
-	if "_pt_" in hist:
-		canvashandler.SetLogy()
 	
 
 	gStyle.SetOptStat(0)
 
-	canvashandler.SetTitle(hist)
 	canvashandler.Update()
+
+#bottom part, the ratio
+	canvashandler.cd()
+	pad2 = TPad("pad2", "pad2", 0, 0, 1, 0.6)
+#	pad2.SetTopMargin(0)
+#	pad2.SetBottomMargin(0.4)
+	pad2.Draw()
+	pad2.cd()
+
+	numerator1 = histo_data1.Clone()
+	numerator1.SetName("")
+	numerator2 = histo_data2.Clone()
+	numerator2.SetName("")
+
+	denominator = histo_mc.Clone()
+	denominator.SetName("")
+
+	numerator1.Divide(denominator)
+	numerator1.Draw("PLC PMC")
+
+	numerator2.Divide(denominator)
+	numerator2.Draw("SAME PLC PMC")
+
 
 	canvashandler.Print(f"merged_{hist}.png")
