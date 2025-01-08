@@ -1,7 +1,11 @@
+import ROOT
 from ROOT import TH1F, TFile, TEfficiency, TF1, std, TArrayD, TCanvas, gPad, gStyle, TPad, TLegend
 from ROOT import kCircle, kPlus, kStar, kRed, kFullCircle, kFullSquare, kBlue, kGreen
 import sys, array
 import numpy as np
+
+ROOT.gROOT.LoadMacro("/raid03/users/agerwin/atlasstyle/AtlasStyle.C")
+ROOT.SetAtlasStyle()
 
 filename_data = sys.argv[1]
 filename_mc = sys.argv[2]
@@ -35,17 +39,21 @@ for deno in plotbranches.keys():
 	deno_handler_mc = file_mc.Get(f"/NOSYS/{deno}")
 	deno_handler_mc = deno_handler_mc.Rebin(len(binedges) - 1, "rebinned_deno",binedges)
 	for nume in plotbranches[deno]:
-		canvashandler=TCanvas("canvas",'canvas',800, 800)
+		canvashandler=TCanvas("canvas",'canvas',800, 850)
 		canvashandler.cd()
 		# todo: set better ratio, we want around 800x600? maybe?
 		pad1 = TPad("pad1", "pad1", 0, 0.3, 1, 1)
-	#	pad1.SetBottomMargin(0)
+		pad1.SetBottomMargin(0.02)
 	
 		pad1.Draw()
 		pad1.cd()
 
 		hist_rangesetter = TH1F("hist", f"efficiency_{nume}", 100, 0, 1000)
-		hist_rangesetter.SetMaximum(0.4)
+		hist_rangesetter.SetMaximum(0.6)
+		hist_rangesetter.GetYaxis().SetTitle("Trigger Efficiency")
+		hist_rangesetter.GetXaxis().SetLabelSize(0)
+		hist_rangesetter.GetYaxis().SetLabelSize(0.035)
+		hist_rangesetter.GetYaxis().SetTitleSize(0.035)
 		hist_rangesetter.Draw()
 
 		nume_handler = file_data.Get(f"/NOSYS/{nume}")
@@ -75,6 +83,7 @@ for deno in plotbranches.keys():
 #		efficiency_data.GetXaxis().SetTitle(nume)
 		efficiency_data.SetMarkerStyle(kFullCircle)
 		efficiency_data.SetMarkerSize(1)
+		efficiency_data.SetMarkerColor(kBlue)
 		efficiency_data.SetLineColor(kBlue)
 
 		xaxis = efficiency_data.GetPassedHistogram().GetXaxis()
@@ -83,15 +92,21 @@ for deno in plotbranches.keys():
 
 		efficiency_mc.SetMarkerStyle(kFullSquare)
 		efficiency_mc.SetMarkerSize(1)
+		efficiency_mc.SetMarkerColor(kRed)
 		efficiency_mc.SetLineColor(kRed)
 
 		efficiency_mc.Draw("EP SAME")
 
 #		gPad.BuildLegend()
-		legend = TLegend(0.7, 0.7, 0.9, 0.9)
-		legend.AddEntry(efficiency_data, f"efficiency_data", "l")
-		legend.AddEntry(efficiency_mc, f"efficiency_mc", "l")
+		legend = TLegend(0.75, 0.75, 0.9, 0.9)
+		legend.AddEntry(efficiency_data, f"efficiency_data", "lp")
+		legend.AddEntry(efficiency_mc, f"efficiency_mc", "lp")
 		legend.SetTextSize(0.03)
+		legend.SetBorderSize(0)
+		legend.SetFillColor(0)
+		legend.SetFillStyle(0)
+		legend.SetTextFont(42)
+
 
 		legend.Draw()
 
@@ -99,7 +114,7 @@ for deno in plotbranches.keys():
 
 		canvashandler.cd()
 		pad2 = TPad("pad2", "pad2", 0, 0, 1, 0.3)
-	#	pad2.SetTopMargin(0)
+		pad2.SetTopMargin(0.01)
 	#	pad2.SetBottomMargin(0.4)
 		pad2.Draw()
 		pad2.cd()
@@ -107,6 +122,14 @@ for deno in plotbranches.keys():
 		efficiency_ratio = nume_handler.Clone("")
 		efficiency_ratio.SetMarkerStyle(kFullCircle)
 		n_bins = efficiency_ratio.GetNbinsX()
+		efficiency_ratio.GetYaxis().SetTitle("Data/MC")
+		efficiency_ratio.GetYaxis().SetLabelSize(0.075)
+		efficiency_ratio.GetYaxis().SetTitleSize(0.075)
+		efficiency_ratio.GetYaxis().SetTitleOffset(1)
+		efficiency_ratio.GetXaxis().SetTitleOffset(1)
+		efficiency_ratio.GetXaxis().SetLabelSize(0.075)
+		efficiency_ratio.GetXaxis().SetTitleSize(0.075)
+
 
 		for i in range(1, n_bins + 1):
     		# Get the efficiency for each bin of eff1 and eff2
@@ -126,8 +149,16 @@ for deno in plotbranches.keys():
 		efficiency_ratio.Draw("EP")
 
 		fit_ratio = TF1("f3",f"{fitresult_data.Parameter(0)}*TMath::Erf((x-{fitresult_data.Parameter(1)})/{fitresult_data.Parameter(2)})/{fitresult_mc.Parameter(0)}*TMath::Erf((x-{fitresult_mc.Parameter(1)})/{fitresult_mc.Parameter(2)})",180,1000)#fitresult_mc.Parameter(1),1000)
+		fit_ratio.SetLineColor(kRed)
+#		fit_ratio.SetLineWidth(1)
 		fit_ratio.Draw("SAME")
 
+		line_at_one = TF1("line","1",0,1000)
+		line_at_one.SetLineStyle(2)
+		line_at_one.SetLineWidth(1)
+		line_at_one.Draw("SAME")
+
+		#fsd
 
 		canvashandler.Print(f"efficiency_datavmc_{nume}.png")
 		canvashandler.Close()
