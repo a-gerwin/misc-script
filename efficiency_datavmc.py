@@ -53,6 +53,8 @@ for deno in plotbranches.keys():
 	
 	# numerator loop
 	for nume in plotbranches[deno]:
+		#trigger name
+		trigger_name = nume.replace("leading_jet_pt_zee_jetmutiplicitycut_only_","")
 		# upped pad
 		canvashandler=TCanvas("canvas",'canvas',800, 850)
 		canvashandler.cd()
@@ -188,6 +190,11 @@ for deno in plotbranches.keys():
 		t2.SetLineWidth(2)
 		t2.DrawLatexNDC(0.2,0.65,f"Fit result: #frac{{{round(fitresult_mc.Parameter(0),2)}}}{{#pi}} * (Arctan(#frac{{x-{round(fitresult_mc.Parameter(1),2)}}}{{{round(fitresult_mc.Parameter(2),2)}}}) + #frac{{#pi}}{{2}})")  
 
+		t3 = ROOT.TLatex()
+		t3.SetTextFont(42)
+		t3.SetTextSize(0.025)
+		t3.SetLineWidth(2)
+		t3.DrawLatexNDC(0.2,0.55,trigger_name)  
 
 		# lower pad
 		canvashandler.cd()
@@ -259,4 +266,3 @@ for deno in plotbranches.keys():
 
 file_data.Close()
 file_mc.Close()
-
